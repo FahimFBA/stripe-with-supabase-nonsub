@@ -6,9 +6,12 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
 
+import { Stripe } from "@stripe/stripe-js";
+
 interface ProductCardProps {
   name: string;
   price: number; // in cents
+  stripePromise: Promise<Stripe | null> | null;
 }
 
 export const ProductCard = ({ name, price }: ProductCardProps) => {
