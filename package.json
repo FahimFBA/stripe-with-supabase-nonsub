@@ -1,5 +1,5 @@
 {
-  "name": "stripe-with-supabase",
+  "name": "stripe-with-supabase-nonsub",
   "version": "0.1.0",
   "private": true,
   "scripts": {
