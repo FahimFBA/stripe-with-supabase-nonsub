@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCard } from "../../rc/components/ProductCard";
 
 const products = [
   { name: "Premium Mug", price: 2500 },
