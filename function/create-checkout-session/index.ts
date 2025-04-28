@@ -1,41 +1,55 @@
-// functions/create-checkout-session/index.ts
+import http from 'http';
+import Stripe from "stripe";
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe?target=deno";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2023-10-16",
+});
 
-serve(async (req) => {
-  const { name, price } = await req.json();
+const server = http.createServer(async (req, res) => {
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
 
-  const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-    apiVersion: "2022-11-15",
-  });
+    req.on('end', async () => {
+      try {
+        const { name, price } = JSON.parse(body);
 
-  try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name,
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name,
+                },
+                unit_amount: price, // price in cents
+              },
+              quantity: 1,
             },
-            unit_amount: price, // price in cents
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${Deno.env.get("SUCCESS_URL")}`,
-      cancel_url: `${Deno.env.get("CANCEL_URL")}`,
-    });
+          ],
+          success_url: `${process.env.SUCCESS_URL}`,
+          cancel_url: `${process.env.CANCEL_URL}`,
+        });
 
-    return new Response(JSON.stringify({ sessionId: session.id }), {
-      headers: { "Content-Type": "application/json" },
-      status: 200,
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ sessionId: session.id }));
+      } catch (error) {
+        console.error("Stripe error:", error);
+        res.writeHead(500);
+        res.end("Error creating checkout session");
+      }
     });
-  } catch (error) {
-    console.error("Stripe error:", error);
-    return new Response("Error creating checkout session", { status: 500 });
+  } else {
+    res.writeHead(405);
+    res.end("Method Not Allowed");
   }
+});
+
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
