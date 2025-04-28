@@ -13,15 +13,24 @@ interface ProductCardProps {
 
 export const ProductCard = ({ name, price }: ProductCardProps) => {
   const handleBuy = async () => {
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, price }),
-    });
-    const { sessionId } = await res.json();
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, price }),
+      });
+      const data = await res.json();
 
-    const stripe = await stripePromise;
-    await stripe?.redirectToCheckout({ sessionId });
+      if (res.status !== 200) {
+        console.error(data.error);
+        return;
+      }
+
+      const stripe = await stripePromise;
+      await stripe?.redirectToCheckout({ sessionId: data.sessionId });
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (
